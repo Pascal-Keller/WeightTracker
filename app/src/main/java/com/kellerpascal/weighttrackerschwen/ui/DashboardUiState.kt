@@ -13,11 +13,3 @@ data class DashboardUiState(
     val isLoading: Boolean = false,
     val errorMessage: String? = null
 )
-
-sealed interface DashboardUiEvent {
-    data object ShowDialog : DashboardUiEvent
-    data object HideDialog : DashboardUiEvent
-    data class WeightChanged(val newValue: String) : DashboardUiEvent
-    data object SaveEntry : DashboardUiEvent
-    data object Logout : DashboardUiEvent
-}

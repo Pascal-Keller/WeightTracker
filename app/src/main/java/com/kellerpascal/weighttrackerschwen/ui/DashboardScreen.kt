@@ -78,7 +78,7 @@ fun DashboardScreenContent(
                         ) {
                             Text(user.name, modifier = Modifier.weight(1f), fontWeight = FontWeight.Bold)
                             if (user.isWinning) Text("👑", style = MaterialTheme.typography.headlineMedium)
-                            Text(String.format("%.1f%%", percentage), color = MaterialTheme.colorScheme.primary)
+                            Text(String.format(Locale.getDefault(), "%.1f%%", percentage), color = MaterialTheme.colorScheme.primary)
                         }
                         LinearProgressIndicator(
                             progress = { (percentage / 100f * 3f).coerceAtMost(1f) },
@@ -93,7 +93,7 @@ fun DashboardScreenContent(
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text("Your Progress", style = MaterialTheme.typography.titleLarge)
                     Text(
-                        String.format("Weight Loss: %.1f%%", state.currentUserPercentage),
+                        String.format(Locale.getDefault(), "Weight Loss: %.1f%%", state.currentUserPercentage),
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary
                     )
