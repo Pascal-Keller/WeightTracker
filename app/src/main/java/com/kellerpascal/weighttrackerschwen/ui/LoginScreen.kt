@@ -5,6 +5,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -23,6 +24,43 @@ fun LoginScreen(
 
     val scope = rememberCoroutineScope()
 
+    LoginContent(
+        email = email,
+        password = password,
+        isLoading = isLoading,
+        errorMessage = errorMessage,
+        onEmailChange = { email = it },
+        onPasswordChange = { password = it },
+        onLoginClick = {
+            scope.launch {
+                isLoading = true
+                try {
+                    viewModel.login(email, password)
+                    navController.navigate("dashboard") {
+                        popUpTo("login") { inclusive = true }
+                    }
+                } catch (e: Exception) {
+                    errorMessage = e.message
+                } finally {
+                    isLoading = false
+                }
+            }
+        },
+        onRegisterClick = { navController.navigate("register") }
+    )
+}
+
+@Composable
+fun LoginContent(
+    email: String,
+    password: String,
+    isLoading: Boolean,
+    errorMessage: String?,
+    onEmailChange: (String) -> Unit,
+    onPasswordChange: (String) -> Unit,
+    onLoginClick: () -> Unit,
+    onRegisterClick: () -> Unit
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -38,7 +76,7 @@ fun LoginScreen(
 
         OutlinedTextField(
             value = email,
-            onValueChange = { email = it },
+            onValueChange = onEmailChange,
             label = { Text("Email") },
             modifier = Modifier.fillMaxWidth()
         )
@@ -47,14 +85,14 @@ fun LoginScreen(
 
         OutlinedTextField(
             value = password,
-            onValueChange = { password = it },
+            onValueChange = onPasswordChange,
             label = { Text("Password") },
             modifier = Modifier.fillMaxWidth()
         )
 
         if (errorMessage != null) {
             Text(
-                text = errorMessage!!,
+                text = errorMessage,
                 color = MaterialTheme.colorScheme.error,
                 modifier = Modifier.padding(top = 8.dp)
             )
@@ -63,21 +101,7 @@ fun LoginScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         Button(
-            onClick = {
-                scope.launch {
-                    isLoading = true
-                    try {
-                        viewModel.login(email, password)
-                        navController.navigate("dashboard") {
-                            popUpTo("login") { inclusive = true }
-                        }
-                    } catch (e: Exception) {
-                        errorMessage = e.message
-                    } finally {
-                        isLoading = false
-                    }
-                }
-            },
+            onClick = onLoginClick,
             modifier = Modifier.fillMaxWidth(),
             enabled = !isLoading && email.isNotBlank() && password.isNotBlank()
         ) {
@@ -94,10 +118,25 @@ fun LoginScreen(
         Spacer(modifier = Modifier.height(8.dp))
 
         TextButton(
-            onClick = { navController.navigate("register") },
+            onClick = onRegisterClick,
             modifier = Modifier.fillMaxWidth()
         ) {
             Text("Don't have an account? Register")
         }
     }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun LoginScreenPreview() {
+    LoginContent(
+        email = "test@example.com",
+        password = "password",
+        isLoading = false,
+        errorMessage = null,
+        onEmailChange = {},
+        onPasswordChange = {},
+        onLoginClick = {},
+        onRegisterClick = {}
+    )
 }
