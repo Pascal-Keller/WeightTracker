@@ -5,6 +5,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -12,19 +13,15 @@ import com.kellerpascal.weighttrackerschwen.ui.viewmodel.AuthViewModel
 import kotlinx.coroutines.launch
 
 @Composable
-fun RegisterScreen(
-    navController: NavController,
-    viewModel: AuthViewModel = viewModel()
+fun RegisterScreenContent(
+    uiState: RegisterUiState,
+    onEmailChange: (String) -> Unit,
+    onPasswordChange: (String) -> Unit,
+    onNameChange: (String) -> Unit,
+    onInitialWeightChange: (String) -> Unit,
+    onSubmit: () -> Unit,
+    onNavigateToLogin: () -> Unit
 ) {
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var name by remember { mutableStateOf("") }
-    var initialWeight by remember { mutableStateOf("") }
-    var isLoading by remember { mutableStateOf(false) }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
-
-    val scope = rememberCoroutineScope()
-
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -39,8 +36,8 @@ fun RegisterScreen(
         )
 
         OutlinedTextField(
-            value = email,
-            onValueChange = { email = it },
+            value = uiState.email,
+            onValueChange = onEmailChange,
             label = { Text("Email") },
             modifier = Modifier.fillMaxWidth()
         )
@@ -48,8 +45,8 @@ fun RegisterScreen(
         Spacer(modifier = Modifier.height(8.dp))
 
         OutlinedTextField(
-            value = password,
-            onValueChange = { password = it },
+            value = uiState.password,
+            onValueChange = onPasswordChange,
             label = { Text("Password") },
             modifier = Modifier.fillMaxWidth()
         )
@@ -57,8 +54,8 @@ fun RegisterScreen(
         Spacer(modifier = Modifier.height(8.dp))
 
         OutlinedTextField(
-            value = name,
-            onValueChange = { name = it },
+            value = uiState.name,
+            onValueChange = onNameChange,
             label = { Text("Your Name") },
             modifier = Modifier.fillMaxWidth()
         )
@@ -66,15 +63,15 @@ fun RegisterScreen(
         Spacer(modifier = Modifier.height(8.dp))
 
         OutlinedTextField(
-            value = initialWeight,
-            onValueChange = { initialWeight = it },
+            value = uiState.initialWeight,
+            onValueChange = onInitialWeightChange,
             label = { Text("Starting Weight (kg)") },
             modifier = Modifier.fillMaxWidth()
         )
 
-        if (errorMessage != null) {
+        if (uiState.errorMessage != null) {
             Text(
-                text = errorMessage!!,
+                text = uiState.errorMessage,
                 color = MaterialTheme.colorScheme.error,
                 modifier = Modifier.padding(top = 8.dp)
             )
@@ -83,27 +80,15 @@ fun RegisterScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         Button(
-            onClick = {
-                scope.launch {
-                    isLoading = true
-                    try {
-                        val weight = initialWeight.toFloatOrNull() ?: throw Exception("Please enter a valid weight")
-                        viewModel.register(email, password, name, weight)
-                        navController.navigate("dashboard") {
-                            popUpTo("login") { inclusive = true }
-                        }
-                    } catch (e: Exception) {
-                        errorMessage = e.message
-                    } finally {
-                        isLoading = false
-                    }
-                }
-            },
+            onClick = onSubmit,
             modifier = Modifier.fillMaxWidth(),
-            enabled = !isLoading && email.isNotBlank() && password.isNotBlank() &&
-                    name.isNotBlank() && initialWeight.isNotBlank()
+            enabled = !uiState.isLoading &&
+                    uiState.email.isNotBlank() &&
+                    uiState.password.isNotBlank() &&
+                    uiState.name.isNotBlank() &&
+                    uiState.initialWeight.isNotBlank()
         ) {
-            if (isLoading) {
+            if (uiState.isLoading) {
                 CircularProgressIndicator(
                     modifier = Modifier.size(24.dp),
                     color = MaterialTheme.colorScheme.onPrimary
@@ -116,10 +101,66 @@ fun RegisterScreen(
         Spacer(modifier = Modifier.height(8.dp))
 
         TextButton(
-            onClick = { navController.navigate("login") },
+            onClick = onNavigateToLogin,
             modifier = Modifier.fillMaxWidth()
         ) {
             Text("Already have an account? Login")
         }
     }
+}
+
+@Composable
+fun RegisterScreen(
+    navController: NavController,
+    viewModel: AuthViewModel = viewModel()
+) {
+    var uiState by remember { mutableStateOf(RegisterUiState()) }
+    val scope = rememberCoroutineScope()
+
+    RegisterScreenContent(
+        uiState = uiState,
+        onEmailChange = { uiState = uiState.copy(email = it) },
+        onPasswordChange = { uiState = uiState.copy(password = it) },
+        onNameChange = { uiState = uiState.copy(name = it) },
+        onInitialWeightChange = { uiState = uiState.copy(initialWeight = it) },
+        onSubmit = {
+            scope.launch {
+                uiState = uiState.copy(isLoading = true, errorMessage = null)
+                try {
+                    val weight = uiState.initialWeight.toFloatOrNull()
+                        ?: throw Exception("Please enter a valid weight")
+                    viewModel.register(
+                        uiState.email,
+                        uiState.password,
+                        uiState.name,
+                        weight
+                    )
+                    navController.navigate("dashboard") {
+                        popUpTo("login") { inclusive = true }
+                    }
+                } catch (e: Exception) {
+                    uiState = uiState.copy(errorMessage = e.message)
+                } finally {
+                    uiState = uiState.copy(isLoading = false)
+                }
+            }
+        },
+        onNavigateToLogin = {
+            navController.navigate("login")
+        }
+    )
+}
+
+@Preview(showBackground = true)
+@Composable
+fun RegisterScreenPreview() {
+    RegisterScreenContent(
+        uiState = RegisterUiState(),
+        onEmailChange = {},
+        onPasswordChange = {},
+        onNameChange = {},
+        onInitialWeightChange = {},
+        onSubmit = {},
+        onNavigateToLogin = {}
+    )
 }
